@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REFORMER 初級</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg:#0e0e0f; --surface:#1a1a1c; --surface2:#232325;
+    --accent:#c8f0d4; --accent-dim:rgba(200,240,212,0.12); --accent-glow:rgba(200,240,212,0.25);
+    --text:#e8e8ea; --text-dim:#7a7a80;
+    --red:#f0a0a0; --red-dim:rgba(240,160,160,0.15);
+    --gold:#f0d48a; --gold-dim:rgba(240,212,138,0.12);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'DM Sans',sans-serif;
+    background:var(--bg); color:var(--text);
+    min-height:100vh; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ─── PAGES ─── */
+  .page { display:none; min-height:100vh; }
+  .page.active { display:block; }
+
+  /* ═══════════════════════════════════════════════
+     HOME PAGE
+     ═══════════════════════════════════════════════ */
+  .home-header { text-align:center; padding:56px 20px 0; }
+  .home-header h1 {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1.7rem,5vw,2.2rem);
+    font-weight:700; letter-spacing:0.02em;
+    color:var(--accent); margin-bottom:6px;
+  }
+  .home-header .subtitle {
+    color:var(--text-dim); font-size:0.83rem;
+    font-weight:300; letter-spacing:0.04em;
+  }
+
+  /* nav links row */
+  .home-nav { display:flex; justify-content:center; gap:20px; padding:18px 0 0; }
+  .nav-link {
+    display:inline-flex; align-items:center; gap:5px;
+    color:var(--text-dim); font-size:.76rem;
+    background:none; border:none; cursor:pointer;
+    font-family:'DM Sans',sans-serif;
+    letter-spacing:0.05em; text-transform:uppercase;
+    transition:color .2s; padding:4px 0;
+  }
+  .nav-link:hover { color:var(--accent); }
+  .nav-link svg { width:13px; height:13px; opacity:.55; }
+
+  /* start content */
+  .start-content { 
+    padding:32px 24px 40px; display:flex; flex-direction:column; 
+    align-items:center; gap:16px; max-width:420px; margin:0 auto; 
+  }
+  .start-main-title {
+    font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700;
+    color:#f0a060; letter-spacing:0.05em; margin-bottom:8px;
+    text-align:center;
+    animation:titlePulse 3s ease-in-out infinite;
+  }
+  @keyframes titlePulse {
+    0%, 100% { opacity:1; }
+    50% { opacity:0.5; }
+  }
+  .start-desc {
+    font-size:.88rem; color:var(--text-dim); line-height:1.6;
+    margin-bottom:20px; text-align:center;
+  }
+  
+  /* challenge buttons */
+  .challenge-btn {
+    width:100%; padding:20px 24px; border-radius:16px;
+    background:var(--surface); border:2px solid var(--surface2);
+    font-family:'DM Sans',sans-serif; cursor:pointer;
+    transition:border-color .2s, transform .15s, box-shadow .2s;
+    text-align:center; -webkit-tap-highlight-color:transparent;
+  }
+  .challenge-btn:active { transform:scale(.98); }
+  .challenge-btn.full { border-color:var(--accent); box-shadow:0 0 16px var(--accent-glow); }
+  .challenge-btn.full:hover { box-shadow:0 0 20px var(--accent-glow); }
+  .challenge-btn.custom { border-color:var(--gold); box-shadow:0 0 12px var(--gold-dim); }
+  .challenge-btn.custom:hover { box-shadow:0 0 16px var(--gold-dim); }
+  .challenge-title {
+    font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:600;
+    margin-bottom:8px; letter-spacing:0.02em;
+  }
+  .challenge-btn.full .challenge-title { color:var(--accent); }
+  .challenge-btn.custom .challenge-title { color:var(--gold); }
+  .challenge-desc {
+    font-size:.8rem; line-height:1.6; color:var(--text-dim);
+  }
+  
+  /* footer brand */
+  .footer-brand {
+    display:flex; align-items:center; gap:8px; justify-content:center;
+    margin-top:24px; padding-top:20px;
+    border-top:1px solid var(--surface2);
+  }
+  .footer-text {
+    font-size:.75rem; color:var(--text-dim); letter-spacing:0.05em;
+  }
+  .footer-logo {
+    height:24px; width:auto; opacity:0.8;
+  }
+
+  /* custom challenge screen */
+  .custom-wrap { padding:40px 20px 60px; max-width:440px; margin:0 auto; }
+  .custom-main-title {
+    font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:700;
+    color:var(--accent); text-align:center; margin-bottom:36px;
+    letter-spacing:0.02em;
+  }
+  .custom-section { margin-bottom:32px; }
+  .custom-section-title {
+    font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--accent);
+    margin-bottom:12px; text-align:center; font-weight:600;
+  }
+  
+  /* custom pick list - 簡化版，中英文一行 */
+  .custom-pick-list { max-height:40vh; overflow-y:auto; padding:8px 0; -webkit-overflow-scrolling:touch; }
+  .custom-pick-item {
+    display:flex; align-items:center; gap:10px;
+    padding:11px 14px; border-radius:10px;
+    background:var(--surface); border:1px solid var(--surface2);
+    margin-bottom:5px; cursor:pointer; transition:border-color .2s, background .2s;
+    -webkit-tap-highlight-color:transparent; font-size:.8rem;
+  }
+  .custom-pick-item:active { border-color:var(--accent); }
+  .custom-pick-item.selected {
+    border:2px solid var(--accent); background:var(--accent-dim);
+  }
+  .custom-pick-item.random {
+    border:2px solid var(--surface2);
+    font-weight:500;
+  }
+  .custom-pick-item.random.selected {
+    border:2px solid var(--accent); box-shadow:0 0 8px var(--accent-glow);
+  }
+  .custom-pick-item .cp-num { font-size:.68rem; color:var(--text-dim); width:20px; text-align:right; flex-shrink:0; }
+  .custom-pick-item .cp-text { flex:1; color:var(--text); line-height:1.4; }
+  .custom-pick-item .cp-en { color:var(--text-dim); margin-left:4px; font-size:.72rem; }
+  
+  /* toggle switches - 簡化版，無文字 */
+  .custom-toggles { display:flex; flex-direction:column; gap:16px; padding:0 12px; }
+  .toggle-item { display:flex; align-items:center; justify-content:space-between; }
+  .toggle-label { font-size:.9rem; color:var(--text); font-weight:500; }
+  .toggle-switch {
+    position:relative; display:flex; align-items:center;
+    width:60px; height:34px; border-radius:17px;
+    background:var(--surface2); border:2px solid var(--surface2);
+    cursor:pointer; transition:all .3s; padding:0;
+  }
+  .toggle-switch.active { 
+    background:var(--accent-dim); border-color:var(--accent); 
+  }
+  .toggle-text {
+    display:none; /* 完全隱藏文字 */
+  }
+  .toggle-slider {
+    position:absolute; top:2px; left:2px; z-index:2;
+    width:30px; height:30px;
+    background:var(--text-dim); border-radius:50%;
+    transition:transform .3s, background .3s;
+    box-shadow:0 2px 4px rgba(0,0,0,0.2);
+  }
+  .toggle-switch.active .toggle-slider {
+    transform:translateX(26px); background:var(--accent);
+  }
+  
+  /* custom start button */
+  .custom-start-btn {
+    width:100%; max-width:320px; margin:20px auto 0; display:block;
+    padding:16px 32px; border-radius:16px;
+    background:var(--accent); color:var(--bg); border:none;
+    font-family:'DM Sans',sans-serif; font-size:1rem; font-weight:600;
+    cursor:pointer; transition:transform .15s;
+    box-shadow:0 0 20px var(--accent-glow);
+    animation:startBtnPulse 2s ease-in-out infinite;
+  }
+  @keyframes startBtnPulse {
+    0%, 100% { box-shadow:0 0 20px var(--accent-glow); }
+    50% { box-shadow:0 0 30px var(--accent-glow), 0 0 40px var(--accent-glow); }
+  }
+  .custom-start-btn:active { transform:scale(.96); }
+  
+  .custom-back {
+    display:block; width:100%; text-align:center; margin-top:20px;
+    background:none; border:none; color:var(--text-dim); font-size:.78rem;
+    cursor:pointer; font-family:'DM Sans',sans-serif; padding:10px 0;
+  }
+
+  /* ═══════════════════════════════════════════════
+     EXAM PAGE
+     ═══════════════════════════════════════════════ */
+  .exam-top {
+    position:sticky; top:0; z-index:10;
+    background:var(--bg); border-bottom:1px solid var(--surface2);
+    padding:12px 20px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .exam-progress-wrap { flex:1; max-width:200px; }
+  .exam-progress-label { font-size:.65rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+  .exam-progress-bar { height:3px; background:var(--surface2); border-radius:2px; overflow:hidden; }
+  .exam-progress-fill { height:100%; background:var(--accent); border-radius:2px; transition:width .5s cubic-bezier(.4,0,.2,1); box-shadow:0 0 6px var(--accent-glow); }
+  .exam-timer {
+    display:flex; align-items:center; gap:6px;
+    background:var(--surface); border:1px solid var(--surface2);
+    border-radius:16px; padding:5px 12px;
+  }
+  .exam-timer-icon { font-size:.8rem; opacity:.5; }
+  .exam-timer-val { font-size:.8rem; font-weight:500; color:var(--accent); letter-spacing:.06em; font-variant-numeric:tabular-nums; }
+
+  /* chain */
+  .chain {
+    max-width:480px; margin:0 auto;
+    padding:16px 20px 100px; position:relative;
+  }
+  .chain::before {
+    content:''; position:absolute;
+    left:50%; top:0; bottom:0; width:2px;
+    background:linear-gradient(to bottom,transparent,var(--surface2) 50px,var(--surface2));
+    transform:translateX(-50%); z-index:0;
+  }
+
+  /* ─── CARD ─── */
+  .card {
+    position:relative; z-index:1;
+    background:var(--surface); border:1px solid var(--surface2);
+    border-radius:16px; overflow:hidden;
+    animation:cardIn .35s cubic-bezier(.4,0,.2,1) both;
+  }
+  @keyframes cardIn { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+  .card-header { display:flex; align-items:center; gap:12px; padding:16px 16px 14px; }
+  .battery { width:36px; height:20px; position:relative; flex-shrink:0; }
+  .battery-body { width:32px; height:20px; border:2px solid var(--accent); border-radius:5px; overflow:hidden; position:relative; }
+  .battery-fill { position:absolute; bottom:0; left:0; right:0; background:var(--accent); transition:height .4s ease; }
+  .battery-nub { position:absolute; right:-4px; top:50%; transform:translateY(-50%); width:3.5px; height:9px; background:var(--accent); border-radius:0 2px 2px 0; }
+  .card-title { flex:1; min-width:0; }
+  .card-title .label { font-size:.64rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em; margin-bottom:2px; }
+  .card-title .name { font-family:'Playfair Display',serif; font-size:.95rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card-title .name-en { font-size:.64rem; color:var(--text-dim); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card-status { font-size:.6rem; padding:3px 8px; border-radius:20px; font-weight:500; letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; flex-shrink:0; }
+  .card-status.correct { background:var(--accent-dim); color:var(--accent); }
+  /* 進行中：不顯示文字，改用綠色邊框閃爍 */
+  .card-status.pending { display:none; }
+  .card.active { border-color:var(--accent); animation:cardBorderPulse 1.5s ease-in-out infinite; }
+  @keyframes cardBorderPulse { 0%,100%{border-color:var(--accent);box-shadow:0 0 8px var(--accent-glow)} 50%{border-color:rgba(200,240,212,0.5);box-shadow:0 0 4px rgba(200,240,212,0.2)} }
+
+  /* 卡片資訊區域（彈簧 + 練習數量）— 取代原本的 pending badge 位置 */
+  .card-info { display:none; flex-direction:column; gap:3px; font-size:.62rem; color:var(--text-dim); flex-shrink:0; text-align:right; line-height:1.3; }
+  .card-info.show { display:flex; }
+  .card-info-springs { color:var(--accent); }
+  .card-info-reps { color:var(--gold); }
+
+  /* sub items */
+  .sub-items { border-top:1px solid var(--surface2); }
+  .sub-item { display:flex; align-items:center; gap:10px; padding:9px 16px 9px 30px; border-bottom:1px solid var(--surface2); animation:cardIn .3s ease both; }
+  .sub-item:last-child { border-bottom:none; }
+  .sub-item .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 5px var(--accent-glow); flex-shrink:0; }
+  .sub-item .sub-name { font-size:.78rem; color:var(--text); }
+  .sub-item .sub-name-en { font-size:.64rem; color:var(--text-dim); margin-left:5px; }
+
+  /* connector */
+  .connector { display:flex; justify-content:center; padding:8px 0; position:relative; z-index:1; }
+  .connector-line { width:2px; height:18px; background:var(--surface2); }
+
+  /* ─── 結束測驗 固定底列 ─── */
+  .end-bar {
+    position:fixed; bottom:0; left:0; right:0; z-index:50;
+    padding:10px 20px 28px;
+    background:var(--bg);
+    border-top:1px solid var(--surface2);
+  }
+  .end-btn {
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    width:100%; max-width:480px; margin:0 auto;
+    padding:13px 20px; border-radius:12px;
+    background:var(--red); border:none;
+    color:var(--bg); font-family:'DM Sans',sans-serif;
+    font-size:.84rem; font-weight:500; cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition:opacity .2s;
+  }
+  .end-btn:active { opacity:.7; }
+  .end-btn svg { width:14px; height:14px; opacity:.7; }
+
+  /* ─── OVERLAY (quiz) ─── */
+  .overlay {
+    position:fixed; top:0; left:0; right:0; bottom:71px;
+    background:rgba(0,0,0,.65);
+    z-index:100; display:flex; align-items:flex-end; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .3s;
+  }
+  .overlay.open { opacity:1; pointer-events:auto; }
+
+  /* 收合狀態：遮光層透明 + pointer-events穿透，panel縮為頂部小條但自己可點 */
+  .overlay.collapsed {
+    opacity:1; pointer-events:none;
+    background:transparent;
+  }
+  .overlay.collapsed .quiz-panel {
+    transform:translateY(calc(100% - 34px));
+    pointer-events:auto;
+    border-radius:16px 16px 0 0;
+  }
+
+  .quiz-panel {
+    background:var(--surface); border-radius:20px 20px 0 0;
+    width:100%; max-width:480px;
+    padding:10px 20px 18px;
+    transform:translateY(100%); transition:transform .38s cubic-bezier(.4,0,.2,1);
+    max-height:calc(100vh - 71px - 20px); overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .overlay.open .quiz-panel { transform:translateY(0); }
+
+  /* 收合鍵 */
+  .quiz-collapse-btn {
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    width:100%; height:24px; margin-bottom:6px;
+    background:none; border:none; cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .collapse-handle { width:32px; height:3px; background:var(--surface2); border-radius:2px; }
+  .collapse-arrow {
+    width:0; height:0;
+    border-left:4px solid transparent; border-right:4px solid transparent;
+    border-top:4px solid var(--text-dim);
+    transition:transform .22s;
+  }
+  .overlay.collapsed .collapse-arrow { transform:rotate(180deg); }
+
+  .quiz-step-label { font-size:.64rem; text-transform:uppercase; letter-spacing:.1em; color:var(--gold); margin-bottom:5px; }
+  .quiz-step-label:empty { display:none; margin:0; }
+  .quiz-question { font-family:'Playfair Display',serif; font-size:1.05rem; color:var(--text); margin-bottom:12px; line-height:1.4; }
+
+  /* options — 中英一行 */
+  .options { display:flex; flex-direction:column; gap:5px; }
+  .option {
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface2); border:1px solid transparent;
+    border-radius:10px; padding:8px 12px;
+    cursor:pointer; transition:border-color .18s, background .18s;
+    user-select:none; -webkit-user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .option:active { border-color:rgba(200,240,212,0.3); }
+  .option .opt-key {
+    width:24px; height:24px; border-radius:6px;
+    background:var(--surface); border:1px solid var(--surface2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.7rem; color:var(--text-dim); font-weight:500; flex-shrink:0;
+  }
+  /* 中英一行容器 */
+  .option .opt-label { font-size:.82rem; color:var(--text); line-height:1.35; flex:1; min-width:0; }
+  .option .opt-label .opt-en { color:var(--text-dim); font-size:.68rem; margin-left:4px; white-space:nowrap; }
+
+  .option.correct-pick { border-color:var(--accent); background:var(--accent-dim); }
+  .option.correct-pick .opt-key { background:var(--accent); color:var(--bg); border-color:transparent; }
+  .option.wrong-pick { border-color:var(--red); background:var(--red-dim); }
+  .option.wrong-pick .opt-key { background:var(--red); color:var(--bg); border-color:transparent; }
+  .option.disabled { pointer-events:none; opacity:.4; }
+  .option.wrong-pick.disabled { opacity:.6; }
+
+  /* feedback */
+  .feedback { margin-top:8px; font-size:.76rem; color:var(--text-dim); min-height:18px; display:flex; align-items:center; gap:6px; opacity:0; transition:opacity .2s; }
+  .feedback.show { opacity:1; }
+
+
+  /* ─── FINISH ─── */
+  .finish-banner { text-align:center; padding:80px 24px; }
+  .finish-banner h2 { font-family:'Playfair Display',serif; font-size:1.7rem; color:var(--gold); margin-bottom:6px; }
+  .finish-banner .finish-time { color:var(--accent); font-size:.88rem; margin-bottom:8px; font-weight:500; }
+  .finish-banner .finish-mode { color:var(--text-dim); font-size:.78rem; margin-bottom:24px; }
+  .finish-banner p { color:var(--text-dim); font-size:.84rem; margin-bottom:20px; }
+  .finish-buttons { display:flex; flex-direction:column; gap:10px; align-items:center; width:100%; max-width:240px; margin:0 auto; }
+  .restart-btn {
+    display:block; width:100%;
+    padding:13px; border-radius:12px;
+    background:var(--accent); color:var(--bg); border:none;
+    font-family:'DM Sans',sans-serif; font-size:.85rem; font-weight:500;
+    cursor:pointer; transition:opacity .2s;
+  }
+  .restart-btn:active { opacity:.7; }
+  .restart-btn.secondary {
+    background:transparent; border:1px solid var(--surface2);
+    color:var(--text-dim); font-size:.8rem;
+  }
+
+  /* ═══════════════════════════════════════════════
+     HISTORY PAGE
+     ═══════════════════════════════════════════════ */
+  .history-page { padding:0 20px 60px; max-width:480px; margin:0 auto; }
+  .history-header { display:flex; align-items:center; justify-content:space-between; padding:48px 0 20px; }
+  .history-header h2 { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--accent); }
+  .back-btn { background:none; border:none; color:var(--text-dim); font-size:.76rem; cursor:pointer; font-family:'DM Sans',sans-serif; display:flex; align-items:center; gap:4px; padding:8px 0; }
+  .back-btn:active { color:var(--text); }
+
+  .history-section-title { font-size:.66rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-dim); margin:22px 0 10px; }
+
+  /* record item */
+  .record-item {
+    background:var(--surface); border:1px solid var(--surface2);
+    border-radius:10px; padding:12px 14px; margin-bottom:6px;
+    transition:border-color .2s;
+  }
+  .record-item.expandable { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .record-item.expandable:active { border-color:var(--accent); }
+  
+  .record-header { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .record-date { font-size:.8rem; color:var(--text); font-variant-numeric:tabular-nums; flex-shrink:0; }
+  .record-badges { display:flex; gap:5px; flex-wrap:wrap; margin-left:auto; }
+  .record-badge {
+    font-size:.6rem; padding:3px 7px; border-radius:10px;
+    font-weight:500; letter-spacing:.03em; white-space:nowrap;
+  }
+  .record-badge.full { background:var(--accent-dim); color:var(--accent); }
+  .record-badge.custom { background:var(--gold-dim); color:var(--gold); }
+  .record-badge.complete { background:var(--accent-dim); color:var(--accent); }
+  .record-badge.interrupted { background:var(--red-dim); color:var(--red); }
+  .record-badge.error { background:rgba(240,180,100,0.15); color:#f0b464; }
+  
+  /* 測驗記錄內的錯誤明細 */
+  .record-details { margin-top:12px; padding-top:12px; border-top:1px solid var(--surface2); }
+  
+  /* 上半部：縮小版電池圖 + 資訊 */
+  .analysis-item-small {
+    padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.03);
+  }
+  .analysis-item-small:last-child { border-bottom:none; }
+  .a-header-small { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }
+  .a-battery-small { width:20px; height:12px; position:relative; flex-shrink:0; margin-top:3px; }
+  .a-bat-body-small { width:17px; height:12px; border:1.5px solid var(--accent); border-radius:3px; overflow:hidden; position:relative; }
+  .a-bat-fill-small { position:absolute; bottom:0; left:0; right:0; height:100%; background:var(--accent); }
+  .a-bat-nub-small { position:absolute; right:-3px; top:50%; transform:translateY(-50%); width:2px; height:5px; background:var(--accent); border-radius:0 2px 2px 0; }
+  .a-main-row-small { flex:1; min-width:0; display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+  .a-name-small { font-size:.9rem; color:var(--text); font-weight:500; }
+  .a-meta-small { font-size:.7rem; color:var(--text-dim); white-space:nowrap; flex-shrink:0; line-height:1.4; }
+  .a-meta-small .err-num { color:var(--red); font-weight:500; }
+  .a-detail-list-small { padding-left:28px; display:flex; flex-direction:column; gap:3px; }
+
+  /* 下半部：標準電池圖 + 資訊 */
+  .analysis-item {
+    background:var(--surface); border:1px solid var(--surface2);
+    border-radius:10px; padding:11px 12px; margin-bottom:4px;
+  }
+  .a-header { display:flex; align-items:flex-start; gap:10px; margin-bottom:6px; }
+  .a-battery { width:26px; height:15px; position:relative; flex-shrink:0; margin-top:3px; }
+  .a-bat-body { width:23px; height:15px; border:1.5px solid var(--accent); border-radius:4px; overflow:hidden; position:relative; }
+  .a-bat-fill { position:absolute; bottom:0; left:0; right:0; height:100%; background:var(--accent); }
+  .a-bat-nub { position:absolute; right:-3px; top:50%; transform:translateY(-50%); width:2.5px; height:6px; background:var(--accent); border-radius:0 2px 2px 0; }
+  .a-main-row { flex:1; min-width:0; display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+  .a-name { font-size:.95rem; color:var(--text); font-weight:500; }
+  .a-meta { font-size:.72rem; color:var(--text-dim); white-space:nowrap; flex-shrink:0; line-height:1.4; }
+  .a-meta .err-num { color:var(--red); font-weight:500; }
+  .a-detail-list { padding-left:36px; display:flex; flex-direction:column; gap:3px; }
+  
+  /* 次項目明細（舊版，已廢棄）*/
+  .analysis-sub { margin-left:34px; margin-top:4px; padding-left:8px; border-left:1px solid var(--surface2); }
+  
+  /* 細部項目列表（新版，用於上下半部）*/
+  .analysis-sub-item, .a-detail-list-small .analysis-sub-item, .a-detail-list .analysis-sub-item { 
+    display:flex; align-items:center; gap:6px; justify-content:space-between;
+    padding:3px 0;
+  }
+  .sub-item-dot { color:var(--accent); font-size:.9rem; line-height:1; flex-shrink:0; }
+  .sub-item-name { font-size:.7rem; color:var(--text); flex:1; }
+  .sub-item-err { font-size:.68rem; color:var(--text-dim); font-weight:500; white-space:nowrap; margin-left:auto; }
+  .sub-item-err .err-num { color:var(--red); }
+
+  .clear-btn {
+    display:block; width:100%; margin-top:28px;
+    padding:12px; border-radius:10px;
+    background:transparent; border:1px solid var(--red-dim);
+    color:var(--red); font-family:'DM Sans',sans-serif;
+    font-size:.78rem; cursor:pointer; transition:background .2s;
+  }
+  .clear-btn:active { background:var(--red-dim); }
+
+  .more-btn {
+    display:block; width:100%; margin-top:4px;
+    padding:10px; border-radius:8px;
+    background:transparent; border:1px solid var(--surface2);
+    color:var(--text-dim); font-family:'DM Sans',sans-serif;
+    font-size:.76rem; cursor:pointer; transition:border-color .2s, color .2s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .more-btn:active { border-color:var(--accent); color:var(--accent); }
+
+  .empty-msg { color:var(--text-dim); font-size:.8rem; text-align:center; padding:36px 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE: HOME
+     ═══════════════════════════════════════════════ -->
+<div class="page active" id="pageHome">
+  <div class="home-header">
+    <h1>REFORMER-初級</h1>
+    <div class="subtitle">考驗你的記憶力!</div>
+  </div>
+  <div class="home-nav">
+    <button class="nav-link" onclick="goHistory()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><polyline points="8,4 8,8 10.5,10"/></svg>
+      查看歷史紀錄
+    </button>
+  </div>
+
+  <!-- start buttons -->
+  <div id="startScreen">
+    <div class="start-content">
+      <h2 class="start-main-title">ARE YOU READY?</h2>
+      
+      <button class="challenge-btn full" onclick="chooseStart('full')">
+        <div class="challenge-title">完整挑戰</div>
+        <div class="challenge-desc">從頭到尾，包含【動作順序】【彈簧數量】【練習數量】的高難度挑戰！</div>
+      </button>
+      <button class="challenge-btn custom" onclick="chooseStart('custom')">
+        <div class="challenge-title">客製化挑戰</div>
+        <div class="challenge-desc">可以自訂起始順序與要不要包含【彈簧數量】與【練習數量】的客製化輕量挑戰！</div>
+      </button>
+      
+<div class="footer-brand">
+  <span class="footer-text">
+    Power by 
+    <a href="https://user77979.pse.is/8ntn4r" target="_blank" rel="noopener noreferrer" style="color:inherit; text-decoration:underline;">
+      SCTA
+    </a>
+  </span>
+  <img src="https://raw.githubusercontent.com/ougaga26-lab/REFORMER-BASIC/main/STCALOGO.png" alt="SCTA" class="footer-logo">
+</div>
+
+    </div>
+  </div>
+
+  <!-- custom challenge config -->
+  <div id="customScreen" style="display:none">
+    <div class="custom-wrap">
+      <h2 class="custom-main-title">客製化我的挑戰</h2>
+      
+      <div class="custom-section">
+        <h3 class="custom-section-title">自訂你的挑戰項目</h3>
+        <div class="custom-toggles">
+          <div class="toggle-item">
+            <span class="toggle-label">彈簧數量</span>
+            <button class="toggle-switch" id="toggleSprings" onclick="toggleOption('springs')">
+              <span class="toggle-text off">False</span>
+              <span class="toggle-text on">True</span>
+              <div class="toggle-slider"></div>
+            </button>
+          </div>
+          <div class="toggle-item">
+            <span class="toggle-label">練習數量</span>
+            <button class="toggle-switch" id="toggleReps" onclick="toggleOption('reps')">
+              <span class="toggle-text off">False</span>
+              <span class="toggle-text on">True</span>
+              <div class="toggle-slider"></div>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="custom-section">
+        <h3 class="custom-section-title">選擇開始位置</h3>
+        <div class="custom-pick-list" id="customPickList"></div>
+      </div>
+      
+      <button class="custom-start-btn" id="customStartBtn" onclick="startCustomChallenge()">
+        開始挑戰
+      </button>
+      
+      <button class="custom-back" onclick="backToStart()">← 返回</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE: EXAM
+     ═══════════════════════════════════════════════ -->
+<div class="page" id="pageExam">
+  <!-- sticky top bar: progress + timer -->
+  <div class="exam-top">
+    <div class="exam-progress-wrap">
+      <div class="exam-progress-label"><span id="progressText">0 / 29</span></div>
+      <div class="exam-progress-bar"><div class="exam-progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+    <div class="exam-timer">
+      <span class="exam-timer-icon">⏱</span>
+      <span class="exam-timer-val" id="timerVal">00:00</span>
+    </div>
+  </div>
+
+  <!-- chain -->
+  <div class="chain" id="chain"></div>
+
+  <!-- finish banner (shown inside exam page) -->
+  <div class="finish-banner" id="finishBanner" style="display:none">
+    <h2 id="finishTitle">🎉 完成！</h2>
+    <div class="finish-time" id="finishTime"></div>
+    <div class="finish-mode" id="finishMode"></div>
+    <div class="finish-buttons">
+      <button class="restart-btn" onclick="goHome()">回到首頁</button>
+      <button class="restart-btn secondary" onclick="goHistory()">查看歷史紀錄</button>
+    </div>
+  </div>
+
+  <!-- fixed bottom: 結束測驗 -->
+  <div class="end-bar" id="endBar">
+    <button class="end-btn" onclick="endExam()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="4" height="10" rx="1"/><rect x="9" y="3" width="4" height="10" rx="1"/></svg>
+      結束測驗
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE: HISTORY
+     ═══════════════════════════════════════════════ -->
+<div class="page" id="pageHistory">
+  <div class="history-page">
+    <div class="history-header">
+      <h2>歷史紀錄</h2>
+      <button class="back-btn" onclick="goHome()">← 返回</button>
+    </div>
+    <div class="history-section-title">測驗記錄</div>
+    <div id="recordsList"></div>
+    <div class="history-section-title">數據分析</div>
+    <div id="analysisList"></div>
+    <button class="clear-btn" onclick="clearHistory()">清空歷史紀錄</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     QUIZ OVERLAY
+     ═══════════════════════════════════════════════ -->
+<div class="overlay" id="overlay">
+  <div class="quiz-panel">
+    <button class="quiz-collapse-btn" onclick="toggleCollapse()">
+      <span class="collapse-handle"></span>
+      <span class="collapse-arrow"></span>
+    </button>
+    <div class="quiz-step-label" id="quizStepLabel"></div>
+    <div class="quiz-question" id="quizQuestion"></div>
+    <div class="options" id="quizOptions"></div>
+    <div class="feedback" id="quizFeedback"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA - 從 GitHub CSV 載入
+// ═══════════════════════════════════════════════════
+let RAW = []; // 初始為空，等待CSV載入
+
+// CSV URL
+const CSV_URL = 'https://raw.githubusercontent.com/ougaga26-lab/REFORMER-BASIC/main/v2.csv';
+
+// 載入並解析 CSV
+async function loadCSV() {
+  try {
+    const response = await fetch(CSV_URL);
+    const csvText = await response.text();
+    parseCSV(csvText);
+    return true;
+  } catch (error) {
+    console.error('載入 CSV 失敗:', error);
+    alert('無法載入題目資料，請檢查網路連線');
+    return false;
+  }
+}
+
+// 解析 CSV 並轉換為 RAW 格式
+function parseCSV(csvText) {
+  const lines = csvText.trim().split('\n');
+  const data = [];
+  
+  // 跳過標題行
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    const cols = parseCSVLine(line);
+    if (cols.length < 6) continue;
+    
+    const type = cols[0].trim(); // series 或 single
+    const main = cols[1].trim(); // 中文名稱
+    const mainEn = cols[2].trim(); // 英文名稱
+    const springs = cols[3].trim(); // 彈簧數量
+    const reps = cols[4].trim(); // 練習數量
+    const subsText = cols[5] ? cols[5].trim() : ''; // 次項目
+    
+    // 解析次項目：格式 "中文1|英文1;中文2|英文2"
+    const subs = [];
+    if (subsText && type === 'series') {
+      const subPairs = subsText.split(';');
+      for (const pair of subPairs) {
+        const [zh, en] = pair.split('|').map(s => s.trim());
+        if (zh && en) {
+          subs.push({ zh, en });
+        }
+      }
+    }
+    
+    data.push({
+      type,
+      main,
+      mainEn,
+      springs,
+      reps,
+      subs
+    });
+  }
+  
+  RAW = data;
+  console.log(`載入 ${RAW.length} 個動作`);
+}
+
+// 解析CSV行（處理引號內的逗號）
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  result.push(current); // 最後一個欄位
+  return result;
+}
+
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let state={
+  currentIdx:0, phase:null, subIdx:0,
+  completedMains:[], startIdx:0,
+  mode:null,          // 'full'|'custom'
+  customOptions:{ springs:false, reps:false }, // 客製化選項
+  customStartIdx:0,   // 客製化挑戰的起始位置
+  finished:false,     // true = 完成到最後; false = 中斷
+  timerSec:0, timerInterval:null,
+  errors:{}
+};
+
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+function shuffle(a){ a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function updateProgress(){
+  const total=RAW.length-state.startIdx;
+  const done=state.completedMains.length;
+  document.getElementById('progressText').textContent=done+' / '+total;
+  document.getElementById('progressFill').style.width=(done/total*100)+'%';
+}
+
+// timer
+function startTimer(){ state.timerSec=0; tickTimer(); state.timerInterval=setInterval(tickTimer,1000); }
+function stopTimer(){ if(state.timerInterval){clearInterval(state.timerInterval);state.timerInterval=null;} }
+function tickTimer(){ state.timerSec++; document.getElementById('timerVal').textContent=fmtTime(state.timerSec); }
+function fmtTime(s){ return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+
+// errors
+function initErrors(){ state.errors={}; }
+function recordError(idx,type,si){ 
+  if(!state.errors[idx]) state.errors[idx]={};
+  const e=state.errors[idx];
+  if(type==='main'){ if(!e.mainErrors) e.mainErrors=0; e.mainErrors++; }
+  else if(type==='springs'){ if(!e.springsErrors) e.springsErrors=0; e.springsErrors++; }
+  else if(type==='reps'){ if(!e.repsErrors) e.repsErrors=0; e.repsErrors++; }
+  else if(type==='type'){ if(!e.typeErrors) e.typeErrors=0; e.typeErrors++; }
+  else if(type==='sub'){ 
+    if(!e.subErrors) e.subErrors=[];
+    if(!e.subErrors[si]) e.subErrors[si]=0;
+    e.subErrors[si]++;
+  }
+}
+// 記錄問題被問到（即使答對）
+function recordAttempt(idx,type,si){
+  if(!state.errors[idx]) state.errors[idx]={};
+  const e=state.errors[idx];
+  if(type==='main'){ if(e.mainErrors===undefined) e.mainErrors=0; }
+  else if(type==='springs'){ if(e.springsErrors===undefined) e.springsErrors=0; }
+  else if(type==='reps'){ if(e.repsErrors===undefined) e.repsErrors=0; }
+  else if(type==='type'){ if(e.typeErrors===undefined) e.typeErrors=0; }
+  else if(type==='sub'){
+    if(!e.subErrors) e.subErrors=[];
+    if(e.subErrors[si]===undefined) e.subErrors[si]=0;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// PAGE NAV
+// ═══════════════════════════════════════════════════
+function showPage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+function goHome(){
+  stopTimer();
+  closeOverlay();
+  // reset 首頁內部狀態，確保回來後看見開始按鈕
+  document.getElementById('startScreen').style.display='block';
+  document.getElementById('customScreen').style.display='none';
+  showPage('pageHome');
+}
+function goHistory(){ showPage('pageHistory'); renderHistory(); }
+
+// ═══════════════════════════════════════════════════
+// START FLOW
+// ═══════════════════════════════════════════════════
+function chooseStart(mode){
+  state.mode=mode;
+  if(mode==='full'){
+    state.customOptions={springs:true, reps:true}; // 完整模式包含所有
+    beginGame(0);
+  } else {
+    // 客製化模式：隱藏頂部header和nav，顯示配置畫面
+    document.querySelector('.home-header').style.display='none';
+    document.querySelector('.home-nav').style.display='none';
+    document.getElementById('startScreen').style.display='none';
+    document.getElementById('customScreen').style.display='block';
+    
+    // 生成動作清單（簡化版：中英文一行）+ 隨機選項
+    const randomHtml=`<div class="custom-pick-item random" data-idx="-1">
+      <span class="cp-num">🎲</span>
+      <span class="cp-text">隨機開始</span>
+    </div>`;
+    const itemsHtml=RAW.map((item,i)=>
+      `<div class="custom-pick-item" data-idx="${i}">
+         <span class="cp-num">${i+1}</span>
+         <span class="cp-text">${item.main} <span class="cp-en">| ${item.mainEn}</span></span>
+       </div>`
+    ).join('');
+    document.getElementById('customPickList').innerHTML=randomHtml+itemsHtml;
+    
+    // 添加點擊事件
+    document.querySelectorAll('.custom-pick-item').forEach(item=>{
+      item.addEventListener('click', function(){
+        // 移除其他選中狀態
+        document.querySelectorAll('.custom-pick-item').forEach(el=>el.classList.remove('selected'));
+        // 添加選中狀態
+        this.classList.add('selected');
+        // 記錄選擇的索引
+        state.customStartIdx=parseInt(this.dataset.idx);
+      });
+    });
+    
+    // 重置開關為關閉和選擇狀態
+    state.customOptions={springs:false, reps:false};
+    state.customStartIdx=0; // 預設從頭開始
+    document.getElementById('toggleSprings').classList.remove('active');
+    document.getElementById('toggleReps').classList.remove('active');
+    // 預設選中第一個隨機選項
+    document.querySelector('.custom-pick-item.random').classList.add('selected');
+  }
+}
+
+function backToStart(){
+  // 恢復顯示頂部header和nav
+  document.querySelector('.home-header').style.display='';
+  document.querySelector('.home-nav').style.display='';
+  document.getElementById('customScreen').style.display='none';
+  document.getElementById('startScreen').style.display='block';
+}
+
+function toggleOption(type){
+  state.customOptions[type]=!state.customOptions[type];
+  const btn=document.getElementById('toggle'+type.charAt(0).toUpperCase()+type.slice(1));
+  if(state.customOptions[type]) btn.classList.add('active');
+  else btn.classList.remove('active');
+}
+
+function startCustomChallenge(){
+  // 從記錄的索引開始遊戲
+  const startIdx=state.customStartIdx;
+  beginGame(startIdx);
+}
+
+function beginGame(fromIdx){
+  // 隨機開始：隨機選一個位置
+  if(fromIdx===-1) fromIdx=Math.floor(Math.random()*RAW.length);
+  
+  state.startIdx=fromIdx; state.currentIdx=fromIdx;
+  state.completedMains=[]; state.phase=null; state.subIdx=0;
+  state.finished=false;
+  initErrors();
+  document.getElementById('startScreen').style.display='none';
+  document.getElementById('customScreen').style.display='none';
+  document.getElementById('finishBanner').style.display='none';
+  document.getElementById('endBar').style.display='flex';
+  document.getElementById('chain').style.display='block'; // ⭐ 顯示chain
+  document.getElementById('chain').innerHTML='';
+  showPage('pageExam');
+  updateProgress();
+  rebuildChain();
+  startTimer();
+  setTimeout(()=>startNextMainQuiz(),350);
+}
+
+// ═══════════════════════════════════════════════════
+// END EXAM (中斷)
+// ═══════════════════════════════════════════════════
+function endExam(){
+  closeOverlay();
+  stopTimer();
+  state.finished=false;
+  saveRecord();
+  document.getElementById('endBar').style.display='none';
+  document.getElementById('chain').style.display='none';
+  const fb=document.getElementById('finishBanner');
+  document.getElementById('finishTitle').textContent='測驗中斷';
+  document.getElementById('finishTime').textContent='用時：'+fmtTime(state.timerSec);
+  
+  // 根據模式顯示標籤
+  let modeText=state.mode==='full'?'完整挑戰':'客製化挑戰';
+  if(state.mode==='custom'){
+    const opts=[];
+    if(state.customOptions.springs) opts.push('彈簧');
+    if(state.customOptions.reps) opts.push('練習');
+    if(opts.length>0) modeText+=`(${opts.join('+')})`;
+  }
+  document.getElementById('finishMode').textContent=modeText+' · 中斷';
+  fb.style.display='block';
+}
+
+// ═══════════════════════════════════════════════════
+// CHAIN
+// ═══════════════════════════════════════════════════
+function rebuildChain(){
+  const chain=document.getElementById('chain');
+  let html='';
+  state.completedMains.forEach(idx=>{
+    html+=renderDoneCard(idx)+`<div class="connector"><div class="connector-line"></div></div>`;
+  });
+  if(state.currentIdx<RAW.length && (state.phase==='selectSprings'||state.phase==='selectReps'||state.phase==='selectType'||state.phase==='selectSub')){
+    html+=renderActiveCard(state.currentIdx)+`<div class="connector"><div class="connector-line"></div></div>`;
+  }
+  chain.innerHTML=html;
+  // 捲動到當前最後一張card（配合收合後觀看）
+  requestAnimationFrame(()=>{
+    const lastCard=chain.querySelector('.card:last-of-type');
+    if(lastCard) lastCard.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+}
+
+function renderDoneCard(idx){
+  const it=RAW[idx];
+  let sub='';
+  if(it.type==='series') sub=`<div class="sub-items">`+it.subs.map(s=>`<div class="sub-item"><div class="dot"></div><span class="sub-name">${s.zh}<span class="sub-name-en">${s.en}</span></span></div>`).join('')+`</div>`;
+  return `<div class="card"><div class="card-header">
+    <div class="battery"><div class="battery-body"><div class="battery-fill" style="height:100%"></div></div><div class="battery-nub"></div></div>
+    <div class="card-title"><div class="label">${it.type==='series'?'系列動作':'單一動作'} · #${idx+1}</div><div class="name">${it.main}</div><div class="name-en">${it.mainEn}</div></div>
+    <span class="card-status correct">完成</span></div>${sub}</div>`;
+}
+function renderActiveCard(idx){
+  const it=RAW[idx];
+  const pct=it.type==='series'?(state.subIdx/it.subs.length*100):0;
+  let sub='';
+  if(it.type==='series'&&state.subIdx>0) sub=`<div class="sub-items">`+it.subs.slice(0,state.subIdx).map(s=>`<div class="sub-item"><div class="dot"></div><span class="sub-name">${s.zh}<span class="sub-name-en">${s.en}</span></span></div>`).join('')+`</div>`;
+  
+  // 根據 phase 決定顯示內容
+  let infoHtml='';
+  if(state.phase==='selectReps'){
+    // 答對彈簧，正在問練習數量 → 只顯示彈簧
+    infoHtml=`<div class="card-info show">
+      <div class="card-info-springs">${it.springs}</div>
+    </div>`;
+  } else if(state.phase==='selectType'||state.phase==='selectSub'){
+    // 答對練習數量之後 → 顯示彈簧 + 練習
+    infoHtml=`<div class="card-info show">
+      <div class="card-info-springs">${it.springs}</div>
+      <div class="card-info-reps">${it.reps}</div>
+    </div>`;
+  }
+  
+  return `<div class="card active"><div class="card-header">
+    <div class="battery"><div class="battery-body"><div class="battery-fill" style="height:${pct}%"></div></div><div class="battery-nub"></div></div>
+    <div class="card-title"><div class="label">${it.type==='series'?'系列動作':'單一動作'} · #${idx+1}</div><div class="name">${it.main}</div><div class="name-en">${it.mainEn}</div></div>
+    ${infoHtml}</div>${sub}</div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// QUIZ FLOW
+// ═══════════════════════════════════════════════════
+function startNextMainQuiz(){ 
+  if(state.currentIdx>=RAW.length)return; 
+  
+  const isFirst=(state.currentIdx===state.startIdx);
+  const isCustomMode=(state.mode==='custom');
+  
+  // 客製化模式的第一題：跳過選擇動作，直接問下一個問題
+  if(isFirst && isCustomMode){
+    // 不記錄main的attempt（因為沒問）
+    // 直接進入下一步
+    if(state.customOptions.springs){
+      state.phase='selectSprings'; 
+      rebuildChain();
+      setTimeout(()=>{ showSpringsQuiz(); openOverlay(); },350);
+    } else if(state.customOptions.reps){
+      state.phase='selectReps'; 
+      rebuildChain();
+      setTimeout(()=>{ showRepsQuiz(); openOverlay(); },350);
+    } else {
+      state.phase='selectType'; 
+      rebuildChain();
+      setTimeout(()=>{ showTypeQuiz(); openOverlay(); },350);
+    }
+  } else {
+    // 完整模式 或 客製化模式的後續題：正常問選擇動作
+    state.phase='selectMain'; 
+    showMainQuiz(); 
+    openOverlay();
+  }
+}
+
+function showMainQuiz(){
+  const idx=state.currentIdx, correct=RAW[idx];
+  recordAttempt(idx,'main'); // 記錄此問題被問到
+  const wrongs=shuffle(RAW.filter((_,i)=>i!==idx)).slice(0,4);
+  const options=shuffle([correct,...wrongs]);
+  const isFirst=(idx===state.startIdx);
+  const stepLabel=''; // 移除STEP 1標籤
+  const question=isFirst?'第一個動作是？':'接下來應該是哪個動作？';
+  renderQuiz(stepLabel,question,
+    options.map(o=>({zh:o.main,en:o.mainEn})), correct.main,
+    (ok)=>{
+      if(!ok){ recordError(idx,'main'); return; }
+      // 答對後根據客製化選項決定下一步
+      if(state.customOptions.springs){
+        state.phase='selectSprings'; rebuildChain();
+        setTimeout(()=>{ showSpringsQuiz(); openOverlay(); },420);
+      } else if(state.customOptions.reps){
+        state.phase='selectReps'; rebuildChain();
+        setTimeout(()=>{ showRepsQuiz(); openOverlay(); },420);
+      } else {
+        // 兩者都不問，直接進入類型判斷
+        state.phase='selectType'; rebuildChain();
+        setTimeout(()=>{ showTypeQuiz(); openOverlay(); },420);
+      }
+    }
+  );
+}
+
+function showSpringsQuiz(){
+  const idx=state.currentIdx, correct=RAW[idx];
+  recordAttempt(idx,'springs'); // 記錄此問題被問到
+  // 收集所有不同的彈簧數量選項（排除正確答案）
+  const allSprings=new Set();
+  RAW.forEach((item,i)=>{
+    if(i!==idx && item.springs!==correct.springs){
+      allSprings.add(item.springs);
+    }
+  });
+  
+  // 從不同的選項中隨機選2個
+  const wrongOptions=shuffle([...allSprings]).slice(0,2);
+  const options=shuffle([
+    {zh:correct.springs,en:''},
+    {zh:wrongOptions[0]||'',en:''},
+    {zh:wrongOptions[1]||'',en:''}
+  ].filter(o=>o.zh));
+  
+  renderQuiz('','「'+correct.main+'」的彈簧數量是？',
+    options, correct.springs,
+    (ok)=>{
+      if(!ok){ recordError(idx,'springs'); return; }
+      // 答對後根據客製化選項決定下一步
+      if(state.customOptions.reps){
+        state.phase='selectReps'; rebuildChain();
+        setTimeout(()=>{ showRepsQuiz(); openOverlay(); },420);
+      } else {
+        // 不問練習數量，直接進入類型判斷
+        state.phase='selectType'; rebuildChain();
+        setTimeout(()=>{ showTypeQuiz(); openOverlay(); },420);
+      }
+    }
+  );
+}
+
+function showRepsQuiz(){
+  const idx=state.currentIdx, correct=RAW[idx];
+  recordAttempt(idx,'reps'); // 記錄此問題被問到
+  // 收集所有不同的練習數量選項（排除正確答案）
+  const allReps=new Set();
+  RAW.forEach((item,i)=>{
+    if(i!==idx && item.reps!==correct.reps){
+      allReps.add(item.reps);
+    }
+  });
+  
+  // 從不同的選項中隨機選2個
+  const wrongOptions=shuffle([...allReps]).slice(0,2);
+  const options=shuffle([
+    {zh:correct.reps,en:''},
+    {zh:wrongOptions[0]||'',en:''},
+    {zh:wrongOptions[1]||'',en:''}
+  ].filter(o=>o.zh));
+  
+  renderQuiz('','「'+correct.main+'」的練習數量是？',
+    options, correct.reps,
+    (ok)=>{
+      if(!ok){ recordError(idx,'reps'); return; }
+      // 答對後進入類型判斷
+      state.phase='selectType'; rebuildChain();
+      setTimeout(()=>{ showTypeQuiz(); openOverlay(); },420);
+    }
+  );
+}
+
+function showTypeQuiz(){
+  const it=RAW[state.currentIdx];
+  recordAttempt(state.currentIdx,'type'); // 記錄此問題被問到
+  const correct=it.type==='series'?'系列動作':'單一動作';
+  renderQuiz('',`「${it.main}」是哪種類型？`,
+    shuffle([{zh:'系列動作',en:'Series'},{zh:'單一動作',en:'Single'}]), correct,
+    (ok)=>{
+      if(!ok){ recordError(state.currentIdx,'type'); return; }
+      setTimeout(()=>{
+        if(it.type==='single') finishCurrentItem();
+        else { state.phase='selectSub'; state.subIdx=0; rebuildChain(); showSubQuiz(); openOverlay(); }
+      },420);
+    }
+  );
+}
+
+function showSubQuiz(){
+  const it=RAW[state.currentIdx], correctObj=it.subs[state.subIdx];
+  recordAttempt(state.currentIdx,'sub',state.subIdx); // 記錄此問題被問到
+  // 從同系列其他次項目抓（最多3個）
+  const sameSubs=it.subs.filter((_,i)=>i!==state.subIdx);
+  const innerPick=shuffle(sameSubs).slice(0,3);
+
+  // 如果同內部不夠3個，從外面補到3個
+  let wrongs=[...innerPick];
+  if(wrongs.length<3){
+    const allOther=[]; RAW.forEach((r,ri)=>{ if(ri!==state.currentIdx) r.subs.forEach(s=>allOther.push(s)); });
+    const pool=allOther.filter(s=>s.zh!==correctObj.zh && !wrongs.some(w=>w.zh===s.zh));
+    wrongs.push(...shuffle(pool).slice(0, 3-wrongs.length));
+  }
+
+  // A-D：正確答案 + 前3個錯誤，隨機排列
+  // E：固定為「該系列沒有其他動作了」
+  const NONE_ITEM={zh:"該系列沒有其他動作了", en:"No other moves in this series"};
+  const firstFour=shuffle([correctObj,...wrongs.slice(0,3)]);
+  const options=[...firstFour, NONE_ITEM];
+  renderQuiz('',`「${it.main}」的第 ${state.subIdx+1} 個動作是？`,
+    options.map(o=>({zh:o.zh,en:o.en})), correctObj.zh,
+    (ok)=>{
+      if(!ok){ recordError(state.currentIdx,'sub',state.subIdx); return; }
+      state.subIdx++; rebuildChain();
+      setTimeout(()=>{
+        if(state.subIdx>=it.subs.length) finishCurrentItem();
+        else { showSubQuiz(); openOverlay(); }
+      },420);
+    }
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// QUIZ RENDER
+// renderQuiz：生成選項並渲染（新題時調用）
+// resetQuizUI：錯誤後只清掉紅色標記，恢復可點擊，選項內容不變
+// ═══════════════════════════════════════════════════
+function renderQuiz(stepLabel,question,options,correctZh,onDone){
+  document.getElementById('quizStepLabel').textContent=stepLabel;
+  document.getElementById('quizQuestion').textContent=question;
+  const keys=['A','B','C','D','E'];
+  document.getElementById('quizOptions').innerHTML=options.map((o,i)=>
+    `<div class="option" id="opt-${i}" onclick="pickOption(${i})">
+       <div class="opt-key">${keys[i]}</div>
+       <div class="opt-label">${o.zh} <span class="opt-en">| ${o.en}</span></div>
+     </div>`
+  ).join('');
+  document.getElementById('quizFeedback').className='feedback';
+  document.getElementById('quizFeedback').innerHTML='';
+  window._quiz={options,correctZh,onDone,locked:false};
+}
+
+function resetQuizUI(){
+  // 只清掉紅色標記和反饋，選項內容不動，恢復可點擊
+  document.querySelectorAll('.option').forEach(el=>{
+    el.classList.remove('wrong-pick','correct-pick','disabled');
+  });
+  document.getElementById('quizFeedback').className='feedback';
+  document.getElementById('quizFeedback').innerHTML='';
+  if(window._quiz) window._quiz.locked=false;
+}
+
+function pickOption(idx){
+  const q=window._quiz;
+  if(!q||q.locked) return;
+  q.locked=true;
+  const chosen=q.options[idx].zh;
+  const ok=(chosen===q.correctZh);
+  const fb=document.getElementById('quizFeedback');
+  const el=document.getElementById('opt-'+idx);
+
+  if(ok){
+    el.classList.add('correct-pick');
+    fb.innerHTML='<span class="f-icon">✓</span> 正確！';
+    fb.className='feedback show';
+    // 正確：閃綠 → 關閉 overlay → 進下一步
+    setTimeout(()=>{ closeOverlay(); setTimeout(()=>q.onDone(true),80); },400);
+  } else {
+    // 錯誤：閃紅 + 訊息，維持1秒，然後只重置UI（選項不變）
+    el.classList.add('wrong-pick');
+    fb.innerHTML='<span class="f-icon">✗</span> 再試一次！';
+    fb.className='feedback show';
+    setTimeout(()=>{
+      q.onDone(false);   // 記錄錯誤
+      resetQuizUI();     // 清掉紅色，恢復點擊，選項內容不動
+    },1000);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// FINISH (完成全部)
+// ═══════════════════════════════════════════════════
+function finishCurrentItem(){
+  state.completedMains.push(state.currentIdx);
+  state.currentIdx++; state.phase=null; state.subIdx=0;
+  updateProgress(); rebuildChain();
+
+  if(state.currentIdx>=RAW.length){
+    stopTimer();
+    state.finished=true;
+    saveRecord();
+    document.getElementById('endBar').style.display='none';
+    document.getElementById('chain').style.display='none';
+    const fb=document.getElementById('finishBanner');
+    document.getElementById('finishTitle').textContent='🎉 完成！';
+    document.getElementById('finishTime').textContent='完成時間：'+fmtTime(state.timerSec);
+    
+    // 根據模式顯示標籤
+    let modeText=state.mode==='full'?'完整挑戰':'客製化挑戰';
+    if(state.mode==='custom'){
+      const opts=[];
+      if(state.customOptions.springs) opts.push('彈簧');
+      if(state.customOptions.reps) opts.push('練習');
+      if(opts.length>0) modeText+=`(${opts.join('+')})`;
+    }
+    document.getElementById('finishMode').textContent=modeText+' · 完成';
+    fb.style.display='block';
+  } else {
+    setTimeout(()=>startNextMainQuiz(),450);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// OVERLAY + 收合
+// ═══════════════════════════════════════════════════
+function openOverlay(){
+  const ov=document.getElementById('overlay');
+  // 先捲動到當前位置，讓收合後看見正確位置（3.4）
+  const chain=document.getElementById('chain');
+  const lastCard=chain.querySelector('.card:last-of-type');
+  if(lastCard){
+    lastCard.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+  ov.classList.remove('collapsed');
+  ov.classList.add('open');
+}
+function closeOverlay(){
+  const ov=document.getElementById('overlay');
+  ov.classList.remove('open','collapsed');
+}
+function toggleCollapse(){
+  const ov=document.getElementById('overlay');
+  if(ov.classList.contains('collapsed')){
+    // 展開回來
+    ov.classList.remove('collapsed');
+    ov.classList.add('open');
+  } else {
+    // 收合：遮光消失，panel縮為小條，觸摸穿透背後
+    ov.classList.remove('open');
+    ov.classList.add('collapsed');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════
+const SKEY='pilates_history';
+function loadHistory(){ try{return JSON.parse(localStorage.getItem(SKEY))||[];}catch(e){return[];} }
+function saveHistory(a){ localStorage.setItem(SKEY,JSON.stringify(a)); }
+
+function saveRecord(){
+  const h=loadHistory();
+  const now=new Date();
+  
+  // 只保存真正被測試過的項目
+  const testedIndices=new Set([...state.completedMains]);
+  // 如果當前項目正在進行中（已經開始問問題），也算被測試過
+  if(state.phase && state.currentIdx<RAW.length){
+    testedIndices.add(state.currentIdx);
+  }
+  
+  // 過濾掉未被測試的項目
+  const filteredErrors={};
+  testedIndices.forEach(idx=>{
+    if(state.errors[idx]){
+      filteredErrors[idx]=state.errors[idx];
+    }
+  });
+  
+  h.push({
+    date:now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0'),
+    time:String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'),
+    mode:state.mode,
+    customOptions:state.customOptions, // 保存客製化選項
+    startIdx:state.startIdx,
+    finished:state.finished,
+    duration:state.timerSec,
+    errors:filteredErrors
+  });
+  saveHistory(h);
+}
+
+function renderHistory(){
+  const history=loadHistory();
+
+  // ─── 測驗記錄 ───
+  const rList=document.getElementById('recordsList');
+  if(!history.length){ rList.innerHTML=`<div class="empty-msg">沒有測驗記錄</div>`; }
+  else {
+    const reversed=[...history].reverse();
+    const SHOW_LIMIT=5;
+    
+    const allHtml=reversed.map((r,rIdx)=>{
+      const modeClass=r.mode==='full'?'full':'custom';
+      let modeLabel=r.mode==='full'?'完整挑戰':'客製化挑戰';
+      
+      // 如果是客製化模式，顯示具體選項
+      if(r.mode==='custom' && r.customOptions){
+        const opts=[];
+        if(r.customOptions.springs) opts.push('彈簧');
+        if(r.customOptions.reps) opts.push('練習');
+        if(opts.length>0) modeLabel+=`(${opts.join('+')})`;
+      }
+      
+      const statusClass=r.finished?'complete':'interrupted';
+      const statusLabel=r.finished?'完成':'中斷';
+      
+      // 計算此次測驗的總錯誤數
+      let totalErrors=0;
+      const itemsWithErrors=[];
+      
+      if(r.errors){
+        Object.keys(r.errors).forEach(k=>{
+          const idx=parseInt(k), e=r.errors[k];
+          const item=RAW[idx];
+          if(!item) return;
+          
+          const mainErr=e.mainErrors||0;
+          const springsErr=e.springsErrors||0;
+          const repsErr=e.repsErrors||0;
+          const typeErr=e.typeErrors||0;
+          const subErrs=e.subErrors||[];
+          const subTotal=subErrs.reduce((sum,x)=>sum+x,0);
+          const itemTotal=mainErr+springsErr+repsErr+typeErr+subTotal;
+          
+          totalErrors+=itemTotal;
+          
+          if(itemTotal>0){
+            itemsWithErrors.push({
+              item,
+              mainErr,
+              springsErr,
+              repsErr,
+              typeErr,
+              subErrs,  // 保留完整的陣列
+              subTotal,
+              total:itemTotal
+            });
+          }
+        });
+      }
+      
+      const hasErrors=itemsWithErrors.length>0;
+      const errorBadge=hasErrors?`<span class="record-badge error">${totalErrors}個錯誤</span>`:'';
+      
+      // 生成錯誤明細
+      let detailsHtml='';
+      if(hasErrors){
+        detailsHtml=`<div class="record-details" id="record-details-${rIdx}" style="display:none">
+          ${itemsWithErrors.map(d=>{
+            // 建立同一行的錯誤次數文字（彈簧｜練習｜類型）
+            const metaParts=[];
+            if(d.springsErr>0) metaParts.push(`彈簧數量<span class="err-num">${d.springsErr}</span>次`);
+            if(d.repsErr>0) metaParts.push(`練習數量<span class="err-num">${d.repsErr}</span>次`);
+            if(d.typeErr>0) metaParts.push(`類型<span class="err-num">${d.typeErr}</span>次`);
+            const metaText=metaParts.length>0?metaParts.join(' | '):'';
+
+            
+            // 建立細部列表（主要動作錯誤、各次項目錯誤）- 只列出有錯的
+            let detailItems='';
+            if(d.mainErr>0){
+              detailItems+=`<div class="analysis-sub-item">
+                <span class="sub-item-dot">•</span>
+                <span class="sub-item-name">主要動作</span>
+                <span class="sub-item-err"><span class="err-num">${d.mainErr}</span>次</span>
+              </div>`;
+            }
+            // 添加次項目錯誤（只列出有錯的）
+            if(d.item.type==='series' && d.subErrs && d.subErrs.length>0){
+              d.item.subs.forEach((s,si)=>{
+                const sErr=d.subErrs[si]||0;
+                if(sErr>0){
+                  detailItems+=`<div class="analysis-sub-item">
+                    <span class="sub-item-dot">•</span>
+                    <span class="sub-item-name">${s.zh}</span>
+                    <span class="sub-item-err"><span class="err-num">${sErr}</span>次</span>
+                  </div>`;
+                }
+              });
+            }
+            
+            return `<div class="analysis-item-small">
+              <div class="a-header-small">
+                <div class="a-battery-small">
+                  <div class="a-bat-body-small"><div class="a-bat-fill-small"></div></div>
+                  <div class="a-bat-nub-small"></div>
+                </div>
+                <div class="a-main-row-small">
+                  <div class="a-name-small">${d.item.main}</div>
+                  ${metaText?`<div class="a-meta-small">${metaText}</div>`:''}
+                </div>
+              </div>
+              ${detailItems?`<div class="a-detail-list-small">${detailItems}</div>`:''}
+            </div>`;
+          }).join('')}
+        </div>`;
+      }
+      
+      return `<div class="record-item ${hasErrors?'expandable':''}" ${hasErrors?`onclick="toggleRecordDetail(${rIdx})"`:''}>
+        <div class="record-header">
+          <div class="record-date">${r.date} ${r.time}</div>
+          <div class="record-badges">
+            <span class="record-badge ${modeClass}">${modeLabel}</span>
+            <span class="record-badge ${statusClass}">${statusLabel}</span>
+            ${errorBadge}
+          </div>
+        </div>
+        ${detailsHtml}
+      </div>`;
+    });
+    
+    if(reversed.length<=SHOW_LIMIT){
+      rList.innerHTML=allHtml.join('');
+    } else {
+      const firstPart=allHtml.slice(0,SHOW_LIMIT).join('');
+      const restPart=allHtml.slice(SHOW_LIMIT).join('');
+      rList.innerHTML=firstPart
+        +`<div id="recordsMore" style="display:none">${restPart}</div>`
+        +`<button class="more-btn" onclick="toggleRecords()">更多紀錄... (${reversed.length-SHOW_LIMIT})</button>`;
+    }
+  }
+
+  // ─── 數據分析 ───
+  const totalErr={}, totalAtt={};
+  RAW.forEach((_,i)=>{ totalErr[i]={main:0,springs:0,reps:0,type:0,sub:[]}; totalAtt[i]={main:0,springs:0,reps:0,type:0,sub:[]}; RAW[i].subs.forEach(()=>{ totalErr[i].sub.push(0); totalAtt[i].sub.push(0); }); });
+
+  history.forEach(r=>{
+    if(!r.errors)return;
+    Object.keys(r.errors).forEach(k=>{
+      const idx=parseInt(k), e=r.errors[k];
+      if(!totalErr[idx])return;
+      // 只有當錯誤數有被記錄時（包括0），才增加嘗試次數
+      if(e.mainErrors!==undefined){ totalErr[idx].main+=e.mainErrors; totalAtt[idx].main+=1; }
+      if(e.springsErrors!==undefined){ totalErr[idx].springs+=e.springsErrors; totalAtt[idx].springs+=1; }
+      if(e.repsErrors!==undefined){ totalErr[idx].reps+=e.repsErrors; totalAtt[idx].reps+=1; }
+      if(e.typeErrors!==undefined){ totalErr[idx].type+=e.typeErrors; totalAtt[idx].type+=1; }
+      if(e.subErrors) e.subErrors.forEach((c,si)=>{
+        if(totalErr[idx].sub[si]!==undefined){ totalErr[idx].sub[si]+=c; totalAtt[idx].sub[si]+=1; }
+      });
+    });
+  });
+
+  const aList=document.getElementById('analysisList');
+  if(!history.length){ aList.innerHTML=`<div class="empty-msg">沒有數據</div>`; }
+  else {
+    // 下半部：顯示所有項目
+    aList.innerHTML=RAW.map((item,idx)=>{
+      const e=totalErr[idx];
+      const mainErr=e.main, springsErr=e.springs, repsErr=e.reps, typeErr=e.type;
+      const subErrs=e.sub;
+      const subTotal=subErrs.reduce((sum,x)=>sum+x,0);
+      const total=mainErr+springsErr+repsErr+typeErr+subTotal;
+      
+      // 建立同一行的錯誤次數文字（固定顯示：彈簧數量｜練習數量｜類型）
+      const a=totalAtt[idx];
+      const metaParts=[];
+      // 彈簧數量
+      if(a.springs>0) metaParts.push(`彈簧數量<span class="err-num">${springsErr}</span>次`);
+      else metaParts.push(`彈簧數量無紀錄`);
+      // 練習數量
+      if(a.reps>0) metaParts.push(`練習數量<span class="err-num">${repsErr}</span>次`);
+      else metaParts.push(`練習數量無紀錄`);
+      // 類型
+      if(a.type>0) metaParts.push(`類型<span class="err-num">${typeErr}</span>次`);
+      else metaParts.push(`類型無紀錄`);
+      const metaText=metaParts.join(' | ');
+
+      
+      // 建立細部列表（所有項目都列出來，根據有無紀錄顯示）
+      let detailItems='';
+      // 主要動作
+      const mainAtt=a.main;
+      detailItems+=`<div class="analysis-sub-item">
+        <span class="sub-item-dot">•</span>
+        <span class="sub-item-name">主要動作</span>
+        <span class="sub-item-err">${mainAtt>0?(mainErr>0?`<span class="err-num">${mainErr}</span>次`:'無錯誤'):'無紀錄'}</span>
+      </div>`;
+      
+      // 所有次項目（包括無錯誤的）
+      if(item.type==='series'){
+        item.subs.forEach((s,si)=>{
+          const sErr=subErrs[si]||0;
+          const sAtt=a.sub[si]||0;
+          detailItems+=`<div class="analysis-sub-item">
+            <span class="sub-item-dot">•</span>
+            <span class="sub-item-name">${s.zh}</span>
+            <span class="sub-item-err">${sAtt>0?(sErr>0?`<span class="err-num">${sErr}</span>次`:'無錯誤'):'無紀錄'}</span>
+          </div>`;
+        });
+      }
+      
+      return `<div class="analysis-item">
+        <div class="a-header">
+          <div class="a-battery">
+            <div class="a-bat-body"><div class="a-bat-fill"></div></div>
+            <div class="a-bat-nub"></div>
+          </div>
+          <div class="a-main-row">
+            <div class="a-name">${item.main}</div>
+            ${metaText?`<div class="a-meta">${metaText}</div>`:''}
+          </div>
+        </div>
+        <div class="a-detail-list">${detailItems}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function toggleRecords(){
+  const more=document.getElementById('recordsMore');
+  const btn=document.querySelector('.more-btn');
+  if(!more||!btn) return;
+  const isOpen=(more.style.display==='block');
+  more.style.display=isOpen?'none':'block';
+  btn.textContent=isOpen?'更多紀錄... ('+more.querySelectorAll('.record-item').length+')':'收起';
+}
+
+function toggleRecordDetail(idx){
+  const detail=document.getElementById('record-details-'+idx);
+  if(!detail) return;
+  const isOpen=(detail.style.display==='block');
+  detail.style.display=isOpen?'none':'block';
+}
+
+function clearHistory(){ localStorage.removeItem(SKEY); renderHistory(); }
+
+// ═══════════════════════════════════════════════════
+// 頁面初始化 - 載入CSV
+// ═══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  // 顯示載入中訊息
+  const homeHeader = document.querySelector('.home-header h1');
+  if (homeHeader) {
+    const originalText = homeHeader.textContent;
+    homeHeader.textContent = '載入中...';
+    
+    // 載入CSV
+    const success = await loadCSV();
+    
+    if (success) {
+      homeHeader.textContent = originalText;
+    } else {
+      homeHeader.textContent = '載入失敗';
+    }
+  }
+});
+</script>
+</body>
+</html>
